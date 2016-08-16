@@ -7,6 +7,7 @@ mod parsing;
 //use rustc_serialize::{Decodable, Encodable, Decoder, Encoder};
 use telegram_bot::*;
 use parsing::*;
+use message::*;
 
 fn main() {
     // Create bot, test simple API call and print bot information
@@ -22,40 +23,41 @@ fn listen(api: Api) -> Result<()> {
     let mut listener = api.listener(ListeningMethod::LongPoll(None));
     // Fetch new updates via long poll method
     let res = listener.listen(|u| {
-        // If the received update contains a message...
         if let Some(message) = u.message {
-            let message = message::ActiveMessage::new(message);
-            println!("{}", message);
-            let name = message.from.first_name;
-
-            // Match message type
-            match message.msg {
-            MessageType::Text(text) => {
-
-                let text_type = text.parse().unwrap();
-                match text_type {
-                        TextType::Exit => {
-                            return Ok(ListeningAction::Stop);
-                        },
-                        TextType::Help => {
-                            try!(api.send_message(
-                                message.chat.id(),
-                                format!("Hi, {}! I can't help you right now. Use /exit for exit", name),
-                                None, None, None, None));
-                        },
-                        TextType::Text(text) => {
-                            try!(api.send_message(
-                                message.chat.id(),
-                                format!("Hi, {}! You just wrote {} ", name, text),
-                                None, None, None, None));
-                        }
-                    }
-                },
-                _ => {}
+            let message = check_message(message);
+            if let Some(message) = message {
+                try!(api.send_message(
+                    message.chat_id,
+                    format!("Hi, {}! {}", message.name, message.msg),
+                    None, None, None, None));
             }
         }
-        // If none of the "try!" statements returned an error: It's Ok!
         Ok(ListeningAction::Continue)
     });
     return res;
+}
+
+fn check_message(message: Message) -> (Option<ResponseMessage>) {
+    match message.msg {
+        MessageType::Text(ref text) => {
+            let response_message = RequestMessage::new(message.clone(), text.clone());
+            println!("{}", response_message);
+
+            let text_type = text.parse().unwrap();
+            match text_type {
+                TextType::Exit => {
+                    return None;
+                },
+                TextType::Help => {
+                    return Some(ResponseMessage::new(response_message.clone(), TextType::Help));
+                },
+                TextType::Text(text) => {
+                    return Some(ResponseMessage::new(response_message.clone(), TextType::Text(text)));
+                }
+            }
+        },
+        _ => {
+            return None;
+        }
+    }
 }
