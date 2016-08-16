@@ -40,7 +40,7 @@ impl fmt::Display for RequestMessage {
         let msg = &self.msg;
         let message_id = &self.message_id;
         let chat_id = &self.chat.id();
-        write!(f, "Message: from={}, msg=\"{}\", msgId={}, chatId={}", name, msg, message_id, chat_id)
+        write!(f, "Message: from={}, msg='{}', msgId={}, chatId={}", name, msg, message_id, chat_id)
     }
 }
 
@@ -67,7 +67,7 @@ fn create_answer_msg(msg: TextType) -> String {
             return format!("We all need help");
         },
         TextType::Text(text) => {
-            return text;
+            return format!("You just wrote '{}'", text);
         },
         _ => {
             return format!("(>.<)");

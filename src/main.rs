@@ -4,13 +4,11 @@ extern crate rustc_serialize;
 mod message;
 mod parsing;
 
-//use rustc_serialize::{Decodable, Encodable, Decoder, Encoder};
 use telegram_bot::*;
 use parsing::*;
 use message::*;
 
 fn main() {
-    // Create bot, test simple API call and print bot information
     let api = Api::from_env("TELEGRAM_BOT_TOKEN").unwrap();
     println!("getMe: {:?}", api.get_me());
     let res = listen(api);
@@ -24,12 +22,9 @@ fn listen(api: Api) -> Result<()> {
     // Fetch new updates via long poll method
     let res = listener.listen(|u| {
         if let Some(message) = u.message {
-            let message = check_message(message);
-            if let Some(message) = message {
-                try!(api.send_message(
-                    message.chat_id,
-                    format!("Hi, {}! {}", message.name, message.msg),
-                    None, None, None, None));
+            let generated_response_message = generate_response(message);
+            if let Some(response_message) = generated_response_message {
+                send_response(response_message, &api);
             }
         }
         Ok(ListeningAction::Continue)
@@ -37,7 +32,7 @@ fn listen(api: Api) -> Result<()> {
     return res;
 }
 
-fn check_message(message: Message) -> (Option<ResponseMessage>) {
+fn generate_response(message: Message) -> (Option<ResponseMessage>) {
     match message.msg {
         MessageType::Text(ref text) => {
             let response_message = RequestMessage::new(message.clone(), text.clone());
@@ -60,4 +55,11 @@ fn check_message(message: Message) -> (Option<ResponseMessage>) {
             return None;
         }
     }
+}
+
+fn send_response(message: ResponseMessage, api: &Api) {
+    api.send_message(
+        message.chat_id,
+        format!("Hi, {}! {}", message.name, message.msg),
+        None, None, None, None);
 }
