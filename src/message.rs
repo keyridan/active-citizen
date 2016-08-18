@@ -14,22 +14,23 @@ pub struct RequestMessage {
     pub forward: Option<(User, Integer)>,
     pub reply: Option<Box<Message>>,
 
-    pub msg: String,
+    pub msg: TextType,
 
     pub caption: Option<String>,
 }
 
-impl RequestMessage {
-    pub fn new(message: Message, msg: String) -> RequestMessage {
+impl From<Message> for RequestMessage {
+    fn from(message: Message) -> RequestMessage {
+        let text_typed_message = message.msg.parse().unwrap();
         RequestMessage {
-            from: (message.from),
-            chat: (message.chat),
-            date: (message.date),
-            forward: (message.forward),
-            reply: (message.reply),
-            msg: (msg),
-            caption: (message.caption),
-            message_id: (message.message_id),
+            from: message.from,
+            chat: message.chat,
+            date: message.date,
+            forward: message.forward,
+            reply: message.reply,
+            msg: text_typed_message,
+            caption: message.caption,
+            message_id: message.message_id
         }
     }
 }
@@ -51,12 +52,12 @@ pub struct ResponseMessage {
     pub msg: String,
 }
 
-impl ResponseMessage {
-    pub fn new(message: RequestMessage, msg: TextType) -> ResponseMessage {
+impl From<RequestMessage> for ResponseMessage {
+    fn from(message: RequestMessage) -> ResponseMessage {
         ResponseMessage {
-            chat_id: (message.chat.id()),
-            msg: (create_answer_msg(msg)),
-            name: (message.from.first_name)
+            chat_id: message.chat.id(),
+            msg: create_answer_msg(message.msg),
+            name: message.from.first_name,
         }
     }
 }
@@ -71,6 +72,19 @@ fn create_answer_msg(msg: TextType) -> String {
         },
         _ => {
             return format!("(>.<)");
+        }
+    }
+}
+
+trait Parse {
+    fn parse(&self) -> Option<TextType>;
+}
+
+impl Parse for MessageType {
+    fn parse(&self) -> Option<TextType> {
+        match *self {
+            MessageType::Text(ref text) => Some(text.parse().unwrap()),
+            _ => None
         }
     }
 }

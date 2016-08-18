@@ -5,7 +5,6 @@ mod message;
 mod parsing;
 
 use telegram_bot::*;
-use parsing::*;
 use message::*;
 
 fn main() {
@@ -34,22 +33,10 @@ fn listen(api: Api) -> Result<()> {
 
 fn generate_response(message: Message) -> (Option<ResponseMessage>) {
     match message.msg {
-        MessageType::Text(ref text) => {
-            let response_message = RequestMessage::new(message.clone(), text.clone());
+        MessageType::Text(_) => {
+            let response_message = RequestMessage::from(message.clone());
             println!("{}", response_message);
-
-            let text_type = text.parse().unwrap();
-            match text_type {
-                TextType::Exit => {
-                    return None;
-                },
-                TextType::Help => {
-                    return Some(ResponseMessage::new(response_message.clone(), TextType::Help));
-                },
-                TextType::Text(text) => {
-                    return Some(ResponseMessage::new(response_message.clone(), TextType::Text(text)));
-                }
-            }
+            return Some(ResponseMessage::from(response_message.clone()));
         },
         _ => {
             return None;
