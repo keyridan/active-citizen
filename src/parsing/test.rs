@@ -1,4 +1,4 @@
-use parsing::*;
+use parsing::TextType;
 
 #[test]
 fn test_parse_exit() {

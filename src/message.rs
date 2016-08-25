@@ -1,49 +1,7 @@
 extern crate telegram_bot;
 
 use telegram_bot::*;
-use std::fmt;
 use parsing::*;
-
-#[derive(Debug, Clone)]
-pub struct RequestMessage {
-    pub message_id: Integer,
-    pub from: User,
-    pub chat: Chat,
-    pub date: Integer,
-
-    pub forward: Option<(User, Integer)>,
-    pub reply: Option<Box<Message>>,
-
-    pub msg: TextType,
-
-    pub caption: Option<String>,
-}
-
-impl From<Message> for RequestMessage {
-    fn from(message: Message) -> RequestMessage {
-        let text_typed_message = message.msg.parse().unwrap();
-        RequestMessage {
-            from: message.from,
-            chat: message.chat,
-            date: message.date,
-            forward: message.forward,
-            reply: message.reply,
-            msg: text_typed_message,
-            caption: message.caption,
-            message_id: message.message_id
-        }
-    }
-}
-
-impl fmt::Display for RequestMessage {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let name = &self.from.first_name;
-        let msg = &self.msg;
-        let message_id = &self.message_id;
-        let chat_id = &self.chat.id();
-        write!(f, "Message: from={}, msg='{}', msgId={}, chatId={}", name, msg, message_id, chat_id)
-    }
-}
 
 #[derive(Debug, Clone)]
 pub struct ResponseMessage {
@@ -52,8 +10,8 @@ pub struct ResponseMessage {
     pub msg: String,
 }
 
-impl From<RequestMessage> for ResponseMessage {
-    fn from(message: RequestMessage) -> ResponseMessage {
+impl From<Message> for ResponseMessage {
+    fn from(message: Message) -> ResponseMessage {
         ResponseMessage {
             chat_id: message.chat.id(),
             msg: create_answer_msg(message.msg),
@@ -62,8 +20,9 @@ impl From<RequestMessage> for ResponseMessage {
     }
 }
 
-fn create_answer_msg(msg: TextType) -> String {
-    match msg {
+fn create_answer_msg(msg: MessageType) -> String {
+    let text_typed_message = msg.parse().unwrap();
+    match text_typed_message {
         TextType::Help => {
             return format!("We all need help");
         },

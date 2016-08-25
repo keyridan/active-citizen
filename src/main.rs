@@ -34,9 +34,8 @@ fn listen(api: Api) -> Result<()> {
 fn generate_response(message: Message) -> (Option<ResponseMessage>) {
     match message.msg {
         MessageType::Text(_) => {
-            let response_message = RequestMessage::from(message.clone());
-            println!("{}", response_message);
-            return Some(ResponseMessage::from(response_message.clone()));
+            println!("{:?}", message);
+            return Some(ResponseMessage::from(message));
         },
         _ => {
             return None;
